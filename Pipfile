@@ -9,6 +9,7 @@ verify_ssl = true
 modal = "*"
 torch = "*"
 torchvision = "*"
+scikit-learn = "*"
 
 [requires]
 python_version = "3.7"

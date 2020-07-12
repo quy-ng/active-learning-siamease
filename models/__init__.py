@@ -1,3 +1,3 @@
-from .triplet_net import *
-from .triplet_distance import *
-from .embedding_net import *
+from .triplet_net import TripletNet
+from .triplet_distance import TripletDistance
+from .embedding_net import EmbeddingNet
