@@ -1,8 +1,7 @@
 import numpy as np
 import torch
-from torch.nn.utils.rnn import pad_sequence
-from tqdm import tqdm_notebook as tqdm
-from ultils import load_data_set
+import pandas as pd
+
 
 CHAR_EMBEDDING_INDEX = {
     " ": 1,
@@ -67,7 +66,20 @@ CHAR_EMBEDDING_INDEX = {
 }
 
 
-def generate_char_embedding(char_to_index, embedding_dim=50):
+def load_data_set(file_path):
+    df = pd.read_csv(file_path)
+    df["content"] = (
+        df["address"]
+            .str.lower()
+            .str.replace("\n", " ")
+            .str.replace(r"[ ]+", " ", regex=True)
+            .str.replace("null", "")
+            .str.replace("nan", "")
+    )
+    return df
+
+
+def generate_char_embedding(char_to_index=CHAR_EMBEDDING_INDEX, embedding_dim=50):
     """
     Generate embedding matrix
     :param char_to_index: 
@@ -76,61 +88,3 @@ def generate_char_embedding(char_to_index, embedding_dim=50):
     """
     embeddings = np.zeros([len(char_to_index), embedding_dim])
     return torch.from_numpy(np.array(embeddings)).float()
-
-
-# todo: write description for prepare_data_for_char func
-def prepare_data_for_char(file_path, embedding_dim):
-    """
-    @param file_path: file to your pre-processed csv
-    @param embedding_dim: dim to encode a character (a.k.a dictionary)
-
-    @return: df: Dataframe after processed
-    @return: X: full-data as int64 matrix
-    @return: X_len: original length of data
-    @return: embeddings: character index embeddings index
-    """
-    # Load dataset
-    df = load_data_set(file_path)
-    df.fillna("", inplace=True)
-    df.reset_index(inplace=True, drop=True)
-    # Embedding
-    embeddings = generate_char_embedding(CHAR_EMBEDDING_INDEX, embedding_dim)
-    # Get X and X_len as matrix
-    X, X_len = load_padded_data(df, CHAR_EMBEDDING_INDEX, char_level=True)
-
-    def truncate_non_string(X, X_len):
-        # Drop rows that have length of word vector = 0
-        truncate_index = [i for i in range(0, len(X_len)) if X_len[i] <= 0]
-        X, X_len = (
-            np.delete(X, truncate_index, axis=0),
-            np.delete(X_len, truncate_index, axis=0),
-        )
-
-        return X, X_len, sorted(truncate_index, reverse=True)
-
-    X, X_len, truncate_index = truncate_non_string(X, X_len)
-    df.drop(index=truncate_index, inplace=True)
-    df.reset_index(inplace=True, drop=True)
-
-    return df, X, X_len, embeddings
-
-
-def load_padded_data(df, word_to_index):
-    """
-    Padding data into a fixed length
-    :param df: dataframe
-    :param word_to_index: dictionary
-    :return: x_train_pad: padded data
-    :return: x_train_length: original length of all data (in case you want to unpadded)
-    """
-    x_train = []
-    for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Padding"):
-        words_vector = [word_to_index.get(word) for word in row["content"] if word_to_index.get(word) is not None]
-        x_train.append(torch.LongTensor(words_vector))
-
-    x_train_len = [
-        len(x) for x in x_train
-    ]  # Get length for pack_padded_sequence after to remove padding
-    x_train_pad = pad_sequence(x_train, batch_first=True)
-    print("Load padded data successfully!")
-    return x_train_pad, x_train_len
