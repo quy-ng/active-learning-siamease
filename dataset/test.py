@@ -1,4 +1,4 @@
-from dataset.inspectorio import create_data
+from dataset.inspectorio_origin import create_data
 
 if __name__ == '__main__':
     f_path = '../data/dac/dedupe-project/new_generated_labeled_data.csv'
