@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import pandas as pd
 
-
 CHAR_EMBEDDING_INDEX = {
     " ": 1,
     "!": 2,
