@@ -3,7 +3,10 @@ import torch
 # Set up the network and training parameters
 from networks import EmbeddingNet
 from losses import OnlineTripletLoss
-from utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, SemihardNegativeTripletSelector # Strategies for selecting triplets within a minibatch
+from models.sampling import AllTripletSelector, \
+    HardestNegativeTripletSelector, \
+    RandomNegativeTripletSelector, \
+    SemihardNegativeTripletSelector
 from metrics import AverageNonzeroTripletsMetric
 
 
@@ -14,24 +17,13 @@ import torch.optim as optim
 
 from datasets import BalancedBatchSampler
 
-train_dataset = MNIST('../data/MNIST', train=True, download=True,
-                             transform=transforms.Compose([
-                                 transforms.ToTensor(),
-                                 transforms.Normalize((mean,), (std,))
-                             ]))
-test_dataset = MNIST('../data/MNIST', train=False, download=True,
-                            transform=transforms.Compose([
-                                transforms.ToTensor(),
-                                transforms.Normalize((mean,), (std,))
-                            ]))
+from dataset import Inspectorio
+from dataset.augmentation import augment
 
-# We'll create mini batches by sampling labels that will be present in the mini batch and number of examples from each class
-train_batch_sampler = BalancedBatchSampler(train_dataset.train_labels, n_classes=10, n_samples=25)
-test_batch_sampler = BalancedBatchSampler(test_dataset.test_labels, n_classes=10, n_samples=25)
+train_dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment)
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
-online_train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler, **kwargs)
-online_test_loader = torch.utils.data.DataLoader(test_dataset, batch_sampler=test_batch_sampler, **kwargs)
+online_train_loader = torch.utils.data.DataLoader(train_dataset, **kwargs)
 
 margin = 1.
 embedding_net = EmbeddingNet()
@@ -46,5 +38,5 @@ n_epochs = 20
 log_interval = 50
 
 if __name__ == '__main__':
-    fit(online_train_loader, online_test_loader, model, loss_fn, optimizer, scheduler, n_epochs, cuda, log_interval,
+    fit(online_train_loader, None, model, loss_fn, optimizer, scheduler, n_epochs, cuda, log_interval,
         metrics=[AverageNonzeroTripletsMetric()])

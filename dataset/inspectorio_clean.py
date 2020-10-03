@@ -234,53 +234,6 @@ def generate_new_rows(df, synonym_dict, rep_column=["name", "address"], low=3, h
 
 
 if __name__ == '__main__':
-    # df = load_data_fill_na()
-    # if df.dtypes["cid"] != "int64":
-    #     df["cid"] = reset_cis(df)
-    #
-    # df = df.loc[:, ["cid", "address", "similar"]]
-    # # get list positive, negative and full set
-    # pos_set, neg_set, full_set = get_classes(df)
-    #
-    # df_generated = generate_new_rows(df, synonym_dict, rep_column=["address"], low=2, high=3)
-    # # Modify generated rows with some rules and append with original data
-    # df_generated = pre_processing_pipeline(df_generated)
-    # df_generated = pd.concat([df, df_generated], ignore_index=True)
-    #
-    # new_rows = []
-    # # Augment by fault of human keyboard
-    # for row in df.itertuples():
-    #     # Augment data base on keyboard mistakes and deletion
-    #     new_row = list(row)[1:]
-    #     aug = nac.KeyboardAug()
-    #     augmented_texts = aug.augment(new_row[1], n=2)
-    #     for text in augmented_texts:
-    #         new_row[1] = text
-    #         new_rows.append(copy.copy(new_row))
-    #     new_row = list(row)[1:]
-    #     aug = nac.RandomCharAug(action="delete")
-    #     augmented_texts = aug.augment(new_row[1], n=2)
-    #     for text in augmented_texts:
-    #         new_row[1] = text
-    #         new_rows.append(copy.copy(new_row))
-    #
-    # # # Save file random augmentation
-    # new_df = pd.DataFrame(new_rows, columns=["cid", "address", "similar"])
-    # df_generated = pd.concat([df_generated, new_df], ignore_index=True)
-    #
-    # df_generated["address"] = (
-    #     df_generated["address"]
-    #         .str.lower()
-    #         .str.replace("\n", " ")
-    #         .str.replace(r"[ ]+", " ", regex=True)
-    #         .str.replace("null", "")
-    #         .str.replace("nan", "")
-    # )
-    # print(len(df_generated))
-    # df_generated.reset_index(inplace=True, drop=True)
-    # df_generated.to_csv(
-    #     "./data/dac/dedupe-project/new/new_generated_labeled_data.csv", index=False
-    # )
 
     df = load_data_fill_na()
     df_generated = generate_new_rows(df, synonym_dict, rep_column=["address"], low=2, high=3)
