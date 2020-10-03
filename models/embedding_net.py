@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     embed_net = EmbeddingNet(embeddings_dim)
     out = embed_net(data[1])
-    print(out)
+    print(out[0].shape)
     print('#'*10)
     out = embed_net(data[1:3])
-    print(out)
+    print(out[0].shape)
