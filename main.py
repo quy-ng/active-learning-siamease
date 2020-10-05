@@ -1,7 +1,8 @@
 import torch
+from torch.utils.data import DataLoader
 
 # Set up the network and training parameters
-from networks import EmbeddingNet
+from models import CharacterEmbedding, TripletNet
 from losses import OnlineTripletLoss
 from models.sampling import AllTripletSelector, \
     HardestNegativeTripletSelector, \
@@ -15,19 +16,21 @@ cuda = torch.cuda.is_available()
 from torch.optim import lr_scheduler
 import torch.optim as optim
 
-from datasets import BalancedBatchSampler
-
 from dataset import Inspectorio
 from dataset.augmentation import augment
 
 train_dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment)
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
-online_train_loader = torch.utils.data.DataLoader(train_dataset, **kwargs)
+online_train_loader = DataLoader(train_dataset, **kwargs)
 
 margin = 1.
-embedding_net = EmbeddingNet()
-model = embedding_net
+embeddings_dim = 50
+n_classes = 10
+hid_dim = 50
+layers = 1
+embedding_net = CharacterEmbedding(embeddings_dim)
+model = TripletNet(embedding_net=embedding_net, n_classes=n_classes, hid_dim=hid_dim, layers=1)
 if cuda:
     model.cuda()
 loss_fn = OnlineTripletLoss(margin, RandomNegativeTripletSelector(margin))

@@ -46,26 +46,21 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
     losses = []
     total_loss = 0
 
-    for batch_idx, (data, target) in enumerate(train_loader):
-        target = target if len(target) > 0 else None
-        if not type(data) in (tuple, list):
-            data = (data,)
-        if cuda:
-            data = tuple(d.cuda() for d in data)
-            if target is not None:
-                target = target.cuda()
+    for batch_idx, data in enumerate(train_loader):
 
+        # if cuda:
+        #     data = tuple(d.cuda() for d in data)
 
         optimizer.zero_grad()
         outputs = model(*data)
 
-        if type(outputs) not in (tuple, list):
-            outputs = (outputs,)
+        # if type(outputs) not in (tuple, list):
+        #     outputs = (outputs,)
 
         loss_inputs = outputs
-        if target is not None:
-            target = (target,)
-            loss_inputs += target
+        # if target is not None:
+        #     target = (target,)
+        #     loss_inputs += target
 
         loss_outputs = loss_fn(*loss_inputs)
         loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else loss_outputs
