@@ -1,8 +1,6 @@
 import torch
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
-from models import EmbeddingNet
-
 
 class TripletNet(torch.nn.Module):
     """
@@ -11,7 +9,7 @@ class TripletNet(torch.nn.Module):
 
     def __init__(
             self,
-            embedding_dim,  # [59, 50]
+            embedding_net,
             n_classes,
             hid_dim=120,
             layers=1,
@@ -20,7 +18,7 @@ class TripletNet(torch.nn.Module):
         super(TripletNet, self).__init__()
         self.n_classes = n_classes
 
-        self.embed_layer = EmbeddingNet(embedding_dim)
+        self.embed_layer = embedding_net
         self.gru = torch.nn.GRU(
             self.embed_layer.get_embedding_dim(),
             hid_dim,

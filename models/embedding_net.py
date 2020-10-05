@@ -14,6 +14,10 @@ class CharacterEmbedding(nn.Module):
         self.embed = nn.Embedding(len(self.vocab), embedding_size)
         self.is_cuda = False
         self.cos = nn.CosineSimilarity(dim=2)
+        self.embedding_size = embedding_size
+
+    def get_embedding_dim(self):
+        return self.embedding_size
 
     def flatten(self, l):
         return list(itertools.chain.from_iterable(l))
@@ -94,3 +98,26 @@ if __name__ == '__main__':
 
     words = embed_net.unpackToSequence(out)
     print(words)
+
+    print('#' * 10)
+    n_classes = 10
+    emb_dim = embed_net.get_embedding_dim()
+    hid_dim = 50
+    layers = 1
+    bidirectional = True
+    gru = torch.nn.GRU(
+        emb_dim,
+        hid_dim,
+        layers,
+        batch_first=True,
+        bidirectional=bidirectional,
+        dropout=0.3,
+    )
+    linear_final = torch.nn.Linear(2 * hid_dim, n_classes)  # turn output of gru to a vector
+    x_packed = embed_net(batch_data)
+    x_packed, hidden_state = gru(x_packed)
+    output, output_lengths = pad_packed_sequence(
+        x_packed, batch_first=True
+    )
+    final_out = linear_final(output)
+    print(final_out)
