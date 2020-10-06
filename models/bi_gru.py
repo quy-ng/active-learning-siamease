@@ -30,15 +30,15 @@ class biGru(torch.nn.Module):
         self.linear_final = torch.nn.Linear(2 * hid_dim, self.n_classes)  # turn output of gru to a vector
 
     def forward_detail(self, x):
-        output = self.embed_layer(x)  # turn off when not use embedding
+        output, perm_idx = self.embed_layer(x)  # turn off when not use embedding
         output, _ = self.gru(output)
         output, output_lengths = pad_packed_sequence(
             output, batch_first=True
         )
         output = self.linear_final(output)
-        return output
+        return output, perm_idx
 
     def forward(self, x):
-        embed_x = self.forward_detail(x)
+        embed_x, perm_idx = self.forward_detail(x)
         embed_x = torch.sum(embed_x, dim=1)
-        return embed_x
+        return embed_x, perm_idx
