@@ -145,13 +145,12 @@ class FunctionNegativeTripletSelector(TripletSelector):
         self.margin = margin
         self.negative_selection_fn = negative_selection_fn
 
-    def get_triplets(self, embeddings, labels):
+    def get_triplets(self, embeddings):
         if self.cpu:
             embeddings = embeddings.cpu()
         distance_matrix = pdist(embeddings)
         distance_matrix = distance_matrix.cpu()
 
-        labels = labels.cpu().data.numpy()
         triplets = []
 
         # todo:
