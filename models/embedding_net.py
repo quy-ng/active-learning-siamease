@@ -51,7 +51,7 @@ class CharacterEmbedding(nn.Module):
         seq_tensor = self.embed(seq_tensor)
 
         # pack them up nicely
-        return pack_padded_sequence(seq_tensor, seq_lengths.cpu().numpy(), batch_first=True)
+        return pack_padded_sequence(seq_tensor, seq_lengths.cpu().numpy(), batch_first=True), perm_idx
 
     def cuda(self):
         self.is_cuda = True
@@ -59,7 +59,15 @@ class CharacterEmbedding(nn.Module):
         return self
 
     def forward(self, feed):
-        return self.embedAndPack(feed, batch_first=True)
+        # sorted_feed = sorted(enumerate(feed), key=lambda x: len(x[1]), reverse=True)
+        # indexes = []
+        # new_feed = []
+        # for i in sorted_feed:
+        #     ix, v = i
+        #     indexes.append(ix)
+        #     new_feed.append(v)
+        output, perm_idx = self.embedAndPack(feed, batch_first=True)
+        return output, perm_idx
 
     def unpackToSequence(self, packed_output):
         output, _ = pad_packed_sequence(packed_output, batch_first=True)
@@ -92,12 +100,13 @@ if __name__ == '__main__':
     embeddings_dim = 50
 
     embed_net = CharacterEmbedding(embeddings_dim)
-    out = embed_net(batch_data)
+    out, sorted_idx = embed_net(batch_data)
     print(out)
     print('#' * 10)
 
     words = embed_net.unpackToSequence(out)
     print(words)
+    print([batch_data[i] for i in sorted_idx])
 
     print('#' * 10)
     n_classes = 10
@@ -114,7 +123,7 @@ if __name__ == '__main__':
         dropout=0.3,
     )
     linear_final = torch.nn.Linear(2 * hid_dim, n_classes)  # turn output of gru to a vector
-    x_packed = embed_net(batch_data)
+    x_packed, _ = embed_net(batch_data)
     x_packed, hidden_state = gru(x_packed)
     output, output_lengths = pad_packed_sequence(
         x_packed, batch_first=True
