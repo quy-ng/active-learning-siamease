@@ -24,7 +24,7 @@ embeddings_dim = 50
 n_classes = 30
 hid_dim = 50
 layers = 1
-batch_size = 9
+batch_size = 50
 
 train_dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment)
 

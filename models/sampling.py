@@ -84,7 +84,7 @@ class TripletSelector:
     def __init__(self):
         pass
 
-    def get_triplets(self, embeddings, labels):
+    def get_triplets(self, embeddings):
         raise NotImplementedError
 
 
@@ -145,7 +145,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
         self.margin = margin
         self.negative_selection_fn = negative_selection_fn
 
-    def get_triplets(self, embeddings):
+    def get_triplets(self, embeddings, perm_data):
         if self.cpu:
             embeddings = embeddings.cpu()
         distance_matrix = pdist(embeddings)
@@ -161,29 +161,29 @@ class FunctionNegativeTripletSelector(TripletSelector):
         # keyboard.add_hotkey('down', down)
         # keyboard.wait()
 
-        for label in set(labels):
-            label_mask = (labels == label)
-            label_indices = np.where(label_mask)[0]
-            if len(label_indices) < 2:
-                continue
-            negative_indices = np.where(np.logical_not(label_mask))[0]
-            anchor_positives = list(combinations(label_indices, 2))  # All anchor-positive pairs
-            anchor_positives = np.array(anchor_positives)
-
-            ap_distances = distance_matrix[anchor_positives[:, 0], anchor_positives[:, 1]]
-            for anchor_positive, ap_distance in zip(anchor_positives, ap_distances):
-                loss_values = ap_distance - distance_matrix[
-                    torch.LongTensor(np.array([anchor_positive[0]])), torch.LongTensor(negative_indices)] + self.margin
-                loss_values = loss_values.data.cpu().numpy()
-                hard_negative = self.negative_selection_fn(loss_values)
-                if hard_negative is not None:
-                    hard_negative = negative_indices[hard_negative]
-                    triplets.append([anchor_positive[0], anchor_positive[1], hard_negative])
-
-        if len(triplets) == 0:
-            triplets.append([anchor_positive[0], anchor_positive[1], negative_indices[0]])
-
-        triplets = np.array(triplets)
+        # for label in set(labels):
+        #     label_mask = (labels == label)
+        #     label_indices = np.where(label_mask)[0]
+        #     if len(label_indices) < 2:
+        #         continue
+        #     negative_indices = np.where(np.logical_not(label_mask))[0]
+        #     anchor_positives = list(combinations(label_indices, 2))  # All anchor-positive pairs
+        #     anchor_positives = np.array(anchor_positives)
+        #
+        #     ap_distances = distance_matrix[anchor_positives[:, 0], anchor_positives[:, 1]]
+        #     for anchor_positive, ap_distance in zip(anchor_positives, ap_distances):
+        #         loss_values = ap_distance - distance_matrix[
+        #             torch.LongTensor(np.array([anchor_positive[0]])), torch.LongTensor(negative_indices)] + self.margin
+        #         loss_values = loss_values.data.cpu().numpy()
+        #         hard_negative = self.negative_selection_fn(loss_values)
+        #         if hard_negative is not None:
+        #             hard_negative = negative_indices[hard_negative]
+        #             triplets.append([anchor_positive[0], anchor_positive[1], hard_negative])
+        #
+        # if len(triplets) == 0:
+        #     triplets.append([anchor_positive[0], anchor_positive[1], negative_indices[0]])
+        #
+        # triplets = np.array(triplets)
 
         return torch.LongTensor(triplets)
 

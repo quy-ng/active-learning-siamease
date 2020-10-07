@@ -59,13 +59,6 @@ class CharacterEmbedding(nn.Module):
         return self
 
     def forward(self, feed):
-        # sorted_feed = sorted(enumerate(feed), key=lambda x: len(x[1]), reverse=True)
-        # indexes = []
-        # new_feed = []
-        # for i in sorted_feed:
-        #     ix, v = i
-        #     indexes.append(ix)
-        #     new_feed.append(v)
         output, perm_idx = self.embedAndPack(feed, batch_first=True)
         return output, perm_idx
 

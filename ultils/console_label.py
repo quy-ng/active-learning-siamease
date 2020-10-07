@@ -1,50 +1,24 @@
+import sys
 
 
-def console_label(deduper: dedupe.api.ActiveMatching) -> None:  # pragma: no cover
-    '''
-   Train a matcher instance (Dedupe, RecordLink, or Gazetteer) from the command line.
-   Example
-
-   .. code:: python
-
-      > deduper = dedupe.Dedupe(variables)
-      > deduper.prepare_training(data)
-      > dedupe.console_label(deduper)
-    '''
-
+def console_label(uncertain_pairs):
     finished = False
-    use_previous = False
-    fields = unique(field.field
-                    for field
-                    in deduper.data_model.primary_fields)
 
-    buffer_len = 1  # Max number of previous operations
-    examples_buffer: List[Tuple[TrainingExample, Literal['match', 'distinct', 'uncertain']]] = []
-    uncertain_pairs: List[TrainingExample] = []
+    match_list = []
+    distinct_list = []
+    uncertain_list = []
 
     while not finished:
-        if use_previous:
-            record_pair, _ = examples_buffer.pop(0)
-            use_previous = False
-        else:
-            if not uncertain_pairs:
-                uncertain_pairs = deduper.uncertain_pairs()
+        try:
+            record_pair = uncertain_pairs.pop()
+        except IndexError:
+            break
 
-            try:
-                record_pair = uncertain_pairs.pop()
-            except IndexError:
-                break
+        n_match = len(match_list)
+        n_distinct = len(distinct_list)
 
-        n_match = (len(deduper.training_pairs['match']) +
-                   sum(label == 'match' for _, label in examples_buffer))
-        n_distinct = (len(deduper.training_pairs['distinct']) +
-                      sum(label == 'distinct' for _, label in examples_buffer))
-
-        for pair in record_pair:
-            for field in fields:
-                line = "%s : %s" % (field, pair[field])
-                print(line, file=sys.stderr)
-            print(file=sys.stderr)
+        line = "(A) %s\n(B) %s" % (record_pair[0], record_pair[1])
+        print(line, file=sys.stderr)
 
         print("{0}/10 positive, {1}/10 negative".format(n_match, n_distinct),
               file=sys.stderr)
@@ -53,12 +27,8 @@ def console_label(deduper: dedupe.api.ActiveMatching) -> None:  # pragma: no cov
         valid_response = False
         user_input = ''
         while not valid_response:
-            if examples_buffer:
-                prompt = '(y)es / (n)o / (u)nsure / (f)inished / (p)revious'
-                valid_responses = {'y', 'n', 'u', 'f', 'p'}
-            else:
-                prompt = '(y)es / (n)o / (u)nsure / (f)inished'
-                valid_responses = {'y', 'n', 'u', 'f'}
+            prompt = '(y)es / (n)o / (u)nsure / (f)inished'
+            valid_responses = {'y', 'n', 'u', 'f'}
 
             print(prompt, file=sys.stderr)
             user_input = input()
@@ -66,32 +36,29 @@ def console_label(deduper: dedupe.api.ActiveMatching) -> None:  # pragma: no cov
                 valid_response = True
 
         if user_input == 'y':
-            examples_buffer.insert(0, (record_pair, 'match'))
+            # examples_buffer.insert(0, (record_pair, 'match'))
+            match_list.append(record_pair)
         elif user_input == 'n':
-            examples_buffer.insert(0, (record_pair, 'distinct'))
+            # examples_buffer.insert(0, (record_pair, 'distinct'))
+            distinct_list.append(record_pair)
         elif user_input == 'u':
-            examples_buffer.insert(0, (record_pair, 'uncertain'))
+            # examples_buffer.insert(0, (record_pair, 'uncertain'))
+            uncertain_list.append(record_pair)
         elif user_input == 'f':
             print('Finished labeling', file=sys.stderr)
             finished = True
-        elif user_input == 'p':
-            use_previous = True
-            uncertain_pairs.append(record_pair)
+    return match_list, distinct_list, uncertain_list
 
-        if len(examples_buffer) > buffer_len:
-            record_pair, label = examples_buffer.pop()
-            if label in {'distinct', 'match'}:
 
-                examples: TrainingData
-                examples = {'distinct': [],
-                            'match': []}
-                examples[label].append(record_pair)  # type: ignore
-                deduper.mark_pairs(examples)
+if __name__ == '__main__':
+    samples = [
+        ('unreal, 1, xa lo ha noi, thao dien, q22, hcm, vietnam',
+         'unreal inc. , #1 xlhn, thao dien, d22, hcmc, vietnam'),
+        ('k & h modas, s.a., 1a calle 20-11, ',
+         'k&h modas, s.a., 1a calle 20-11, , villa nueva, gt 01064'),
+        ('song hong garment joint stock company, national  rd.  #10,, loc ha commune, nam dinh, viet nam ',
+         'song hong garment co., ltd, 10a1 tan long hamlet, thanh phu commune, ben luc district, nam dinh, vn ')
+    ]
 
-    for record_pair, label in examples_buffer:
-        if label in ['distinct', 'match']:
-
-            exmples: TrainingData
-            examples = {'distinct': [], 'match': []}
-            examples[label].append(record_pair)  # type: ignore
-            deduper.mark_pairs(examples)
+    a, b, c = console_label(samples)
+    print(a, b, c)
