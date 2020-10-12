@@ -1,4 +1,6 @@
 import sys
+import random
+from dataset import augment_address
 
 
 def console_label(uncertain_pairs):
@@ -17,7 +19,13 @@ def console_label(uncertain_pairs):
         n_match = len(match_list)
         n_distinct = len(distinct_list)
 
-        line = "(A) %s\n(B) %s" % (record_pair[0], record_pair[1])
+        if random.random() > 0.85:
+            display_pair = (record_pair[0], (record_pair[0][0], augment_address(record_pair[0][1])))
+            uncertain_pairs.append((record_pair[0], record_pair[1]))
+        else:
+            display_pair = (record_pair[0], record_pair[1])
+
+        line = "(A) %s\n(B) %s" % (display_pair[0], display_pair[1])
         print(line, file=sys.stderr)
 
         print("{0}/10 positive, {1}/10 negative".format(n_match, n_distinct),

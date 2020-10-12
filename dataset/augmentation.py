@@ -5,12 +5,22 @@ import pandas as pd
 from tqdm import tqdm
 import nlpaug.augmenter.char as nac
 
-__all__ = ['augment']
+__all__ = ['augment_dataframe', 'augment_address']
 
 from ultils import synonym_dict
 
 
-def augment(data_frame: pd.DataFrame, columns: tuple = ("name", "address"), rep_columns: tuple = ("address",)):
+def augment_address(text):
+    result = generate_row(text, synonym_dict, syn_type='address')
+    if result["code"] == 1:
+        text = result["content"]
+    aug = nac.RandomCharAug(action="delete")
+    augmented_texts = aug.augment(text, n=1)
+    return augmented_texts
+
+
+def augment_dataframe(data_frame: pd.DataFrame, columns: tuple = ("name", "address"),
+                      rep_columns: tuple = ("address",)):
     df_generated = generate_new_rows(data_frame[list(columns)], synonym_dict, list(rep_columns), low=2, high=3)
     df_generated = pre_processing_pipeline(df_generated, rep_columns[0])
     df_generated = pd.concat([data_frame[list(columns)], df_generated], ignore_index=True)
@@ -38,7 +48,7 @@ def augment(data_frame: pd.DataFrame, columns: tuple = ("name", "address"), rep_
 
     augmented = pd.DataFrame(new_rows, columns=columns)
 
-    return df_generated
+    return augmented
 
 
 def helper_find_index(list_names: list, name: str) -> int:

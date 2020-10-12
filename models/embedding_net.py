@@ -85,9 +85,9 @@ class CharacterEmbedding(nn.Module):
 
 if __name__ == '__main__':
     from dataset import Inspectorio
-    from dataset.augmentation import augment
+    from dataset.augmentation import augment_dataframe
 
-    data = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment)
+    data = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment_dataframe)
     batch_data = data[1:10]
 
     embeddings_dim = 50
