@@ -169,7 +169,8 @@ class FunctionNegativeTripletSelector(TripletSelector):
         for i in range(0, distance_matrix.shape[0]):
             copied_d = copy.copy(distance_matrix)
             sorted_val, sorted_in = copied_d[i].sort()
-            interested_list = sorted_in[1:3].tolist() + sorted_in[-2:].tolist()
+            # interested_list = sorted_in[1:3].tolist() + sorted_in[-2:].tolist()
+            interested_list = sorted_in[1:3].tolist()
             for j in interested_list:
                 candidates_index.append((i, j))
             interested_list = random.sample(interested_list, k=2)
