@@ -89,7 +89,7 @@ class TripletSelector:
     def __init__(self):
         pass
 
-    def get_triplets(self, embeddings):
+    def get_triplets(self, data, model):
         raise NotImplementedError
 
 
@@ -150,7 +150,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
         self.margin = margin
         self.negative_selection_fn = negative_selection_fn
 
-    def get_triplets(self, model, data):
+    def get_triplets(self, data, model):
         name_address = []
         for i in range(len(data[0])):
             name_address.append(data[0][i] + '; ' + data[1][i])
