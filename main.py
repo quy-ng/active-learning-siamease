@@ -3,12 +3,9 @@ from torch.utils.data import DataLoader
 
 # Set up the network and training parameters
 from models import CharacterEmbedding, biGru
-from losses import OnlineTripletLoss
-from models.sampling import AllTripletSelector, \
-    HardestNegativeTripletSelector, \
-    RandomNegativeTripletSelector, \
-    SemihardNegativeTripletSelector
-from metrics import AverageNonzeroTripletsMetric
+from models.losses import OnlineTripletLoss
+from models.sampling import HardestNegativeTripletSelector
+from models.metrics import AverageNonzeroTripletsMetric
 
 from trainer import fit
 
