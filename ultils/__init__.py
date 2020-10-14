@@ -1,5 +1,16 @@
 from .character_level import *
 
+
+def to_cuda(loader, device):
+    """
+    Transfer your dataloader into CPU or GPU
+    @param loader: DataLoader
+    @param device: torch.device
+    @return: dataloader in specific device
+    """
+    return [load.to(device) for load in loader]
+
+
 synonym_dict = {
     "name": [
         ["[^a-zA-Z]inc.", "[^a-zA-Z]inc"],

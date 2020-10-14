@@ -2,15 +2,18 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import itertools
-import string
-
-from torch.autograd import Variable
+import numpy as np
+from ultils.character_level import default_vocab
 
 
 class CharacterEmbedding(nn.Module):
-    def __init__(self, embedding_size, max_length=None):
+    def __init__(self, embedding_size, vocab=None, max_length=None):
         super(CharacterEmbedding, self).__init__()
-        self.vocab = ['<pad>'] + list(string.printable)
+        if vocab is not None:
+            self.vocab = vocab
+        else:
+            self.vocab = default_vocab
+
         self.embed = nn.Embedding(len(self.vocab), embedding_size)
         self.is_cuda = False
         self.cos = nn.CosineSimilarity(dim=2)
@@ -23,38 +26,26 @@ class CharacterEmbedding(nn.Module):
     def flatten(self, l):
         return list(itertools.chain.from_iterable(l))
 
-    def embedAndPack(self, seqs, batch_first=False):
+    def embedAndPack(self, vectorized_seqs, seq_lengths=None, batch_first=True, enforce_sorted=False):
 
-        vectorized_seqs = [[self.vocab.index(tok) for tok in seq] for seq in seqs]
+        if seq_lengths is None:
+            seq_lengths = [len(x) for x in vectorized_seqs]
 
-        # get the length of each seq in your batch
-        seq_lengths = torch.LongTensor(list(map(len, vectorized_seqs)))
-        seq_lengths = seq_lengths.cuda() if self.is_cuda else seq_lengths
-
-        # dump padding everywhere, and place seqs on the left.
-        # NOTE: you only need a tensor as big as your longest sequence
-        if self.max_length is None:
-            self.max_length = seq_lengths.max()
-        seq_tensor = Variable(torch.zeros((len(vectorized_seqs), self.max_length))).long()
-        seq_tensor = seq_tensor.cuda() if self.is_cuda else seq_tensor
-
-        for idx, (seq, seqlen) in enumerate(zip(vectorized_seqs, seq_lengths)):
-            seq_tensor[idx, :seqlen] = torch.LongTensor(seq).cuda() if self.is_cuda else torch.LongTensor(seq)
-
-        # SORT YOUR TENSORS BY LENGTH!
-        seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
-        seq_tensor = seq_tensor[perm_idx]
-
-        # utils.rnn lets you give (B,L,D) tensors where B is the batch size, L is the maxlength, if you use batch_first=True
-        # Otherwise, give (L,B,D) tensors
-        if not batch_first:
-            seq_tensor = seq_tensor.transpose(0, 1)  # (B,L,D) -> (L,B,D)
+        # # dump padding everywhere, and place seqs on the left.
+        # # NOTE: you only need a tensor as big as your longest sequence
+        # seq_tensor = np.zeros((len(vectorized_seqs), self.max_length))
+        # for idx, (seq, seqlen) in enumerate(zip(vectorized_seqs, seq_lengths)):
+        #     seq_tensor[idx, :seqlen] = seq
 
         # embed your sequences
-        seq_tensor = self.embed(seq_tensor)
+        # seq_tensor = torch.from_numpy(seq_tensor).type(torch.LongTensor)
+        # seq_tensor = self.embed(seq_tensor)
+        seq_tensor = self.embed(vectorized_seqs)
 
         # pack them up nicely
-        return pack_padded_sequence(seq_tensor, seq_lengths.cpu().numpy(), batch_first=True), perm_idx
+        return pack_padded_sequence(seq_tensor, seq_lengths,
+                                    batch_first=batch_first,
+                                    enforce_sorted=enforce_sorted)
 
     def cuda(self):
         self.is_cuda = True
@@ -62,8 +53,9 @@ class CharacterEmbedding(nn.Module):
         return self
 
     def forward(self, feed):
-        output, perm_idx = self.embedAndPack(feed, batch_first=True)
-        return output, perm_idx
+        if type(feed) is list:
+            output = self.embedAndPack(feed[0], feed[1], batch_first=True)
+        return output
 
     def unpackToSequence(self, packed_output):
         output, _ = pad_packed_sequence(packed_output, batch_first=True)
@@ -87,42 +79,21 @@ class CharacterEmbedding(nn.Module):
 
 
 if __name__ == '__main__':
-    from dataset import Inspectorio
-    from dataset.augmentation import augment_dataframe
-
-    data = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment_dataframe)
-    batch_data = data[1:10]
-
+    from ultils.character_level import vectorize
     embeddings_dim = 50
+    length_max = 60
+    batch_data = [
+        'no. 165 wehou ave, economic & technology deelpmet zone',
+        '90 udog vihar, phas i'
+    ]
 
-    embed_net = CharacterEmbedding(embeddings_dim)
-    out, sorted_idx = embed_net(batch_data)
+    embed_net = CharacterEmbedding(embedding_size=embeddings_dim,
+                                   max_length=length_max)
+    vectorized_seqs, data_len = vectorize(batch_data, embed_net.vocab)
+    out = embed_net(vectorized_seqs)
     print(out)
     print('#' * 10)
 
     words = embed_net.unpackToSequence(out)
     print(words)
-    print([batch_data[i] for i in sorted_idx])
 
-    print('#' * 10)
-    n_classes = 10
-    emb_dim = embed_net.get_embedding_dim()
-    hid_dim = 50
-    layers = 1
-    bidirectional = True
-    gru = torch.nn.GRU(
-        emb_dim,
-        hid_dim,
-        layers,
-        batch_first=True,
-        bidirectional=bidirectional,
-        dropout=0.3,
-    )
-    linear_final = torch.nn.Linear(2 * hid_dim, n_classes)  # turn output of gru to a vector
-    x_packed, _ = embed_net(batch_data)
-    x_packed, hidden_state = gru(x_packed)
-    output, output_lengths = pad_packed_sequence(
-        x_packed, batch_first=True
-    )
-    final_out = linear_final(output)
-    print(final_out)

@@ -1,8 +1,13 @@
-import numpy as np
-import torch
-import pandas as pd
+import string
+__all__ = ['default_vocab', 'vectorize']
 
-CHAR_EMBEDDING_INDEX = {
+char_targets = string.printable[:36] + \
+                       string.printable[63:65] + \
+                       string.printable[67:71] + \
+                       string.printable[74:78] + ',;@' + ' ' + '，'
+# default_vocab = ['<pad>'] + list(char_targets)
+
+default_vocab = {
     " ": 1,
     "!": 2,
     "#": 3,
@@ -65,25 +70,16 @@ CHAR_EMBEDDING_INDEX = {
 }
 
 
-def load_data_set(file_path):
-    df = pd.read_csv(file_path)
-    df["content"] = (
-        df["address"]
-            .str.lower()
-            .str.replace("\n", " ")
-            .str.replace(r"[ ]+", " ", regex=True)
-            .str.replace("null", "")
-            .str.replace("nan", "")
-    )
-    return df
+# def vectorize(seqs, vocab):
+#     vectorized_seqs = [[vocab.index(tok) for tok in seq] for seq in seqs]
+#     data_len = [
+#         len(x) for x in vectorized_seqs
+#     ]  # Get length for pack_padded_sequence after to remove padding
+#     return vectorized_seqs, data_len
 
-
-def generate_char_embedding(char_to_index=CHAR_EMBEDDING_INDEX, embedding_dim=50):
-    """
-    Generate embedding matrix
-    :param char_to_index: 
-    :param embedding_dim: 
-    :return: 
-    """
-    embeddings = np.zeros([len(char_to_index), embedding_dim])
-    return torch.from_numpy(np.array(embeddings)).float()
+def vectorize(seq, vocab):
+    try:
+        vectorized_seq = [vocab.get(tok) for tok in seq]
+    except:
+        print(seq)
+    return vectorized_seq

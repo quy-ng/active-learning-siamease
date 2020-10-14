@@ -1,33 +1,41 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-__all__ = ['OnlineTripletLoss', 'OnlineContrastiveLoss']
+__all__ = ['OnlineTripletLoss', 'TripletDistance']
 
 
-class OnlineContrastiveLoss(nn.Module):
+class TripletDistance(nn.Module):
     """
-    Online Contrastive loss
-    Takes a batch of embeddings and corresponding labels.
-    Pairs are generated using pair_selector object that take embeddings and targets and return indices of positive
-    and negative pairs
+    Triplet loss
+    Takes embeddings of an anchor sample, a positive sample and a negative sample
     """
 
-    def __init__(self, margin, pair_selector):
-        super(OnlineContrastiveLoss, self).__init__()
+    def __init__(self, margin):
         self.margin = margin
-        self.pair_selector = pair_selector
+        super(TripletDistance, self).__init__()
 
-    def forward(self, embeddings, target):
-        positive_pairs, negative_pairs = self.pair_selector.get_pairs(embeddings, target)
-        if embeddings.is_cuda:
-            positive_pairs = positive_pairs.cuda()
-            negative_pairs = negative_pairs.cuda()
-        positive_loss = (embeddings[positive_pairs[:, 0]] - embeddings[positive_pairs[:, 1]]).pow(2).sum(1)
-        negative_loss = F.relu(
-            self.margin - (embeddings[negative_pairs[:, 0]] - embeddings[negative_pairs[:, 1]]).pow(2).sum(
-                1).sqrt()).pow(2)
-        loss = torch.cat([positive_loss, negative_loss], dim=0)
-        return loss.mean()
+    def forward(self, anchors, positives, negatives):
+        anchors_2d = anchors.reshape(anchors.shape[0], -1)
+        positives_2d = positives.reshape(positives.shape[0], -1)
+        negatives_2d = negatives.reshape(negatives.shape[0], -1)
+
+        similarity_pos = torch.sum(anchors_2d * positives_2d, dim=1) / (
+                torch.sqrt(torch.sum(anchors_2d * anchors_2d, dim=1))
+                * torch.sqrt(torch.sum(positives_2d * positives_2d, dim=1))
+        )
+
+        similarity_neg = torch.sum(anchors_2d * negatives_2d, dim=1) / (
+                torch.sqrt(torch.sum(anchors_2d * anchors_2d, dim=1))
+                * torch.sqrt(torch.sum(negatives_2d * negatives_2d, dim=1))
+        )
+
+        losses = F.relu(-similarity_pos + similarity_neg + self.margin)
+
+        return (
+            losses.sum(),
+            similarity_pos,
+            similarity_neg,
+        )
 
 
 class OnlineTripletLoss(nn.Module):
