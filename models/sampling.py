@@ -166,21 +166,38 @@ class FunctionNegativeTripletSelector(TripletSelector):
         candidates_index: List[Tuple] = []
         candidates_distance: List = []
 
+        hypothesis_triplets = []
+
         for i in range(0, distance_matrix.shape[0]):
             copied_d = copy.copy(distance_matrix)
             sorted_val, sorted_in = copied_d[i].sort()
-            # interested_list = sorted_in[1:3].tolist() + sorted_in[-2:].tolist()
-            interested_list = sorted_in[1:3].tolist()
-            for j in interested_list:
-                candidates_index.append((i, j))
-            interested_list = random.sample(interested_list, k=2)
-            if interested_list[0] != interested_list[1]:
-                candidates_index.append((interested_list[0], interested_list[1]))
+            hypothesis_positives = sorted_in[1:4].tolist()
+            hypothesis_negatives = []
+
+            # find hypothesis triplet where dp - dn < margin
+            for j in hypothesis_positives:
+                for k in range(0, distance_matrix.shape[0]):
+                    if k not in hypothesis_positives and k != i:
+                        hypothesis_negatives.append(k)
+                _loss = distance_matrix[i, j] - distance_matrix[i, hypothesis_negatives] + self.margin
+                _loss = _loss.data.cpu().numpy()
+                hard_negative = np.argmin(_loss)
+                hypothesis_triplets.append((i, j, hypothesis_negatives[hard_negative]))
+
+            # mix hypothesis_triplets
+            for l in hypothesis_triplets:
+                candidates_index.append((l[0], l[1]))
+                candidates_index.append((l[0], l[2]))
+                candidates_index.append((l[1], l[2]))
+            # mix hypothesis_positives
+            candidates_index.append(tuple(random.sample(hypothesis_positives, 2)))
+
             # random
             random_selected = random.choices([i for i in range(distance_matrix.shape[0])], k=2)
-            for j in random_selected:
-                if i != j:
-                    candidates_index.append((i, j))
+            for h in random_selected:
+                if i != h and (i, h) not in candidates_index:
+                    candidates_index.append((i, h))
+
             candidates_index = list(set(candidates_index))
         for i in candidates_index:
             candidates_distance.append(distance_matrix[i[0], i[1]])

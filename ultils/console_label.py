@@ -45,13 +45,13 @@ def console_label(uncertain_pairs):
 
         if user_input == 'y':
             # examples_buffer.insert(0, (record_pair, 'match'))
-            match_list.append(record_pair)
+            match_list.append(display_pair)
         elif user_input == 'n':
             # examples_buffer.insert(0, (record_pair, 'distinct'))
-            distinct_list.append(record_pair)
+            distinct_list.append(display_pair)
         elif user_input == 'u':
             # examples_buffer.insert(0, (record_pair, 'uncertain'))
-            uncertain_list.append(record_pair)
+            uncertain_list.append(display_pair)
         elif user_input == 'f':
             print('Finished labeling', file=sys.stderr)
             finished = True
