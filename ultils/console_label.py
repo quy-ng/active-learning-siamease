@@ -35,8 +35,8 @@ def console_label(uncertain_pairs):
         valid_response = False
         user_input = ''
         while not valid_response:
-            prompt = '(y)es / (n)o / (u)nsure / (f)inished'
-            valid_responses = {'y', 'n', 'u', 'f'}
+            prompt = '(y)es / (n)o / (f)inished'
+            valid_responses = {'y', 'n', 'f'}
 
             print(prompt, file=sys.stderr)
             user_input = input()
@@ -49,9 +49,9 @@ def console_label(uncertain_pairs):
         elif user_input == 'n':
             # examples_buffer.insert(0, (record_pair, 'distinct'))
             distinct_list.append(display_pair)
-        elif user_input == 'u':
+        # elif user_input == 'u':
             # examples_buffer.insert(0, (record_pair, 'uncertain'))
-            uncertain_list.append(display_pair)
+            # uncertain_list.append(display_pair)
         elif user_input == 'f':
             print('Finished labeling', file=sys.stderr)
             finished = True
