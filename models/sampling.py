@@ -213,33 +213,22 @@ class FunctionNegativeTripletSelector(TripletSelector):
         candidates.reverse()
 
         candidates = list(set(candidates))
-        console_label(candidates)
+        triplets = console_label(candidates)
+        anchor = []
+        neg = []
+        pos = []
+        for i in triplets:
+            anchor.append(i[0][0] + '; ' + i[0][1])
+            pos.append(i[1][0] + '; ' + i[1][1])
+            neg.append(i[2][0] + '; ' + i[2][1])
+        anchor, _ = model(anchor)
+        pos, _ = model(pos)
+        neg, _ = model(neg)
 
-        for label in set(labels):
-            label_mask = (labels == label)
-            label_indices = np.where(label_mask)[0]
-            if len(label_indices) < 2:
-                continue
-            negative_indices = np.where(np.logical_not(label_mask))[0]
-            anchor_positives = list(combinations(label_indices, 2))  # All anchor-positive pairs
-            anchor_positives = np.array(anchor_positives)
-
-            ap_distances = distance_matrix[anchor_positives[:, 0], anchor_positives[:, 1]]
-            for anchor_positive, ap_distance in zip(anchor_positives, ap_distances):
-                loss_values = ap_distance - distance_matrix[
-                    torch.LongTensor(np.array([anchor_positive[0]])), torch.LongTensor(negative_indices)] + self.margin
-                loss_values = loss_values.data.cpu().numpy()
-                hard_negative = self.negative_selection_fn(loss_values)
-                if hard_negative is not None:
-                    hard_negative = negative_indices[hard_negative]
-                    triplets.append([anchor_positive[0], anchor_positive[1], hard_negative])
-
-        if len(triplets) == 0:
-            triplets.append([anchor_positive[0], anchor_positive[1], negative_indices[0]])
-
+        triplets = [anchor, pos, neg]
         triplets = np.array(triplets)
 
-        return torch.LongTensor(triplets)
+        return triplets
 
 
 def HardestNegativeTripletSelector(margin, cpu=False):

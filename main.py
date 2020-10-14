@@ -32,7 +32,7 @@ train_dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=Non
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 online_train_loader = DataLoader(train_dataset, **kwargs, batch_size=batch_size)
 
-model = biGru(embedding_net=CharacterEmbedding(embeddings_dim),
+model = biGru(embedding_net=CharacterEmbedding(embeddings_dim, train_dataset.length_max),
               n_classes=n_classes, hid_dim=hid_dim, layers=1)
 if cuda:
     model.cuda()

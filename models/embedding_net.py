@@ -8,13 +8,14 @@ from torch.autograd import Variable
 
 
 class CharacterEmbedding(nn.Module):
-    def __init__(self, embedding_size):
+    def __init__(self, embedding_size, max_length=None):
         super(CharacterEmbedding, self).__init__()
         self.vocab = ['<pad>'] + list(string.printable)
         self.embed = nn.Embedding(len(self.vocab), embedding_size)
         self.is_cuda = False
         self.cos = nn.CosineSimilarity(dim=2)
         self.embedding_size = embedding_size
+        self.max_length = max_length
 
     def get_embedding_dim(self):
         return self.embedding_size
@@ -32,7 +33,9 @@ class CharacterEmbedding(nn.Module):
 
         # dump padding everywhere, and place seqs on the left.
         # NOTE: you only need a tensor as big as your longest sequence
-        seq_tensor = Variable(torch.zeros((len(vectorized_seqs), seq_lengths.max()))).long()
+        if self.max_length is None:
+            self.max_length = seq_lengths.max()
+        seq_tensor = Variable(torch.zeros((len(vectorized_seqs), self.max_length))).long()
         seq_tensor = seq_tensor.cuda() if self.is_cuda else seq_tensor
 
         for idx, (seq, seqlen) in enumerate(zip(vectorized_seqs, seq_lengths)):

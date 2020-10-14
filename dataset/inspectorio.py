@@ -44,6 +44,12 @@ class Inspectorio(Dataset):
         else:
             data = df[['name', 'address']].apply(lambda row: process_helper(row), axis=1)
         self.data = shuffle(data.values)
+        length_max = 0
+        for i in self.data:
+            _len = len(i[0]) + len(i[1]) + 2  # 2 for join name and address
+            if _len > length_max:
+                length_max = _len
+        self.length_max = length_max
 
     def __len__(self):
         return len(self.data)

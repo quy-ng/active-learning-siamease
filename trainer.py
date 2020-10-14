@@ -50,10 +50,6 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
 
         optimizer.zero_grad()
 
-        # outputs, perm_idx = model(data)
-        # perm_data = [data[i] for i in perm_idx]
-        # loss_inputs = outputs
-
         loss_outputs = loss_fn(data, model)
         loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else loss_outputs
         losses.append(loss.item())

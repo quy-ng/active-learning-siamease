@@ -19,6 +19,7 @@ class biGru(torch.nn.Module):
         self.n_classes = n_classes
 
         self.embed_layer = embedding_net
+        self.is_cuda = embedding_net.is_cuda
         self.gru = torch.nn.GRU(
             self.embed_layer.get_embedding_dim(),
             hid_dim,

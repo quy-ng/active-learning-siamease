@@ -1,5 +1,6 @@
 import sys
 import random
+import pandas as pd
 from dataset import augment_address
 
 
@@ -55,7 +56,21 @@ def console_label(uncertain_pairs):
         elif user_input == 'f':
             print('Finished labeling', file=sys.stderr)
             finished = True
-    return match_list, distinct_list, uncertain_list
+    d_plus = pd.DataFrame(match_list, columns=['anchor', 'pos'])
+    d_minus = pd.DataFrame(distinct_list, columns=['anchor', 'neg'])
+    t1 = pd.merge(left=d_plus, right=d_minus, how='inner', on='anchor')
+    t1.dropna(inplace=True)
+    t1 = t1[['anchor', 'pos', 'neg']]
+    t2 = []
+    for i in d_minus.itertuples():
+        _aug = (i.anchor[0], augment_address(i.anchor[1]))
+        t2.append((i.anchor, i.neg, _aug))
+    t2 = pd.DataFrame(t2, columns=['anchor', 'neg', 'pos'])
+    t2 = t2[['anchor', 'pos', 'neg']]
+
+    triplets = pd.concat([t1, t2])
+
+    return triplets.values
 
 
 if __name__ == '__main__':
