@@ -23,7 +23,7 @@ batch_size = 13
 lr = 0.01
 early_stopping_steps = 5
 
-model_path = './pretrain/trained_batch_model.h5'
+model_path = 'pretrain/trained_batch_model_old_vocab.h5'
 
 anc_loader, pos_loader, neg_loader, max_length = InspectorioLabel.load_data(
         './data/dac/dedupe-project/new/new_generated_labeled_data.csv', batch_size, default_vocab
