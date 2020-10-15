@@ -2,6 +2,7 @@ import torch
 from torch.optim import lr_scheduler
 import torch.optim as optim
 from tqdm import tqdm
+import sys
 
 # Set up the network and training parameters
 from models import CharacterEmbedding, biGru
@@ -28,6 +29,7 @@ max_length = 121
 
 train_dataset, raw_presentation = Inspectorio.load_data('~/Desktop/active_learning_data.xlsx', batch_size, default_vocab)
 model_path = 'pretrain/trained_batch_model_v02.h5'
+model_save = 'pretrain/online_model.h5'
 
 model = biGru(embedding_net=CharacterEmbedding(embeddings_dim, default_vocab, max_length),
               n_classes=n_classes, hid_dim=hid_dim, layers=1)
@@ -50,6 +52,9 @@ if __name__ == '__main__':
     best_lost = None
     loss_list = []
     model.train()
+
+    want_stop = False
+
     for epoch in tqdm(range(n_epochs), desc="Epoch", total=n_epochs):
         avg_loss = 0
         avg_pos_sim = 0
@@ -66,28 +71,37 @@ if __name__ == '__main__':
             optimizer.step()
         # Average loss and distance of all epochs
         avg_loss /= len(train_dataset)
-        loss_list.append(avg_loss)
-        print(
-            "\rEpoch:\t{}\tAverage Loss:\t{}\t\tPos:\t{}\t\tNeg:\t{}\t\t".format(
-                epoch,
-                round(avg_loss, 4),
-                round(float(avg_pos_sim), 4),
-                round(float(avg_neg_sim), 4),
-            ),
-            end="",
-        )
-        # Save model thought each checkpoint
-        # Early stopping after reachs {early_stopping_steps} steps
-        forward_index = 0
-        if best_lost is None or best_lost > avg_loss:
-            best_lost = avg_loss
-            forward_index = 0
-            # Save checkpoint every time we get the better loss
+
+        print("Do you want to add more input? \n")
+        while not valid_response:
+            prompt = '(y)es / (n)o'
+            valid_responses = {'y', 'n'}
+
+            print(prompt, file=sys.stderr)
+            user_input = input()
+            if user_input in valid_responses:
+                valid_response = True
+        if user_input == 'y':
+            break
+        if user_input == 'n':
+            print('Stopping training', file=sys.stderr)
+            want_stop = True
+            break
+
+        if want_stop:
+            loss_list.append(avg_loss)
+            print(
+                "\rEpoch:\t{}\tAverage Loss:\t{}\t\tPos:\t{}\t\tNeg:\t{}\t\t".format(
+                    epoch,
+                    round(avg_loss, 4),
+                    round(float(avg_pos_sim), 4),
+                    round(float(avg_neg_sim), 4),
+                ),
+                end="",
+            )
             torch.save(
                 {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
                 model_path,
             )
-        else:
-            forward_index += 1
-            if forward_index == early_stopping_steps or best_lost == 0:
-                break
+            print(f'Saved params! at {model_save}', file=sys.stderr)
+            break
