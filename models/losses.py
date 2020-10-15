@@ -61,11 +61,12 @@ class OnlineTripletLoss(nn.Module):
     triplets
     """
 
-    def __init__(self, margin, triplet_selector, triplet_distance):
+    def __init__(self, margin, triplet_selector, triplet_distance, max_length):
         super(OnlineTripletLoss, self).__init__()
         self.margin = margin
         self.triplet_selector = triplet_selector
         self.triplet_distance = triplet_distance
+        self.max_length = max_length
 
     def forward(self, embedded_data, model, raw_data, vocab):
 
@@ -86,36 +87,55 @@ class OnlineTripletLoss(nn.Module):
         aa_length = []
         for i in a:
             chars_vector = vectorize(i, vocab)
-            aa.append(torch.LongTensor(chars_vector))
-            aa_length.append(len(i))
+            aa.append(chars_vector)
+            aa_length.append(len(chars_vector))
 
         nn = []
         nn_length = []
         for i in n:
             chars_vector = vectorize(i, vocab)
-            nn.append(torch.LongTensor(chars_vector))
-            nn_length.append(len(i))
+            nn.append(chars_vector)
+            nn_length.append(len(chars_vector))
 
         pp = []
         pp_length = []
         for i in p:
             chars_vector = vectorize(i, vocab)
-            pp.append(torch.LongTensor(chars_vector))
-            pp_length.append(len(i))
+            pp.append(chars_vector)
+            pp_length.append(len(chars_vector))
 
-        aa_train = pad_sequence(aa, batch_first=True)
-        nn_train = pad_sequence(nn, batch_first=True)
-        pp_train = pad_sequence(pp, batch_first=True)
+        aa_tensor = np.zeros((len(aa), self.max_length))
+        for idx, (seq, seqlen) in enumerate(zip(aa, aa_length)):
+            aa_tensor[idx, :seqlen] = seq
+        aa_tensor = torch.from_numpy(aa_tensor).type(torch.LongTensor)
+
+        nn_tensor = np.zeros((len(nn), self.max_length))
+        for idx, (seq, seqlen) in enumerate(zip(nn, nn_length)):
+            nn_tensor[idx, :seqlen] = seq
+        nn_tensor = torch.from_numpy(nn_tensor).type(torch.LongTensor)
+
+        pp_tensor = np.zeros((len(pp), self.max_length))
+        for idx, (seq, seqlen) in enumerate(zip(pp, pp_length)):
+            pp_tensor[idx, :seqlen] = seq
+        pp_tensor = torch.from_numpy(pp_tensor).type(torch.LongTensor)
+
+        aa_train = pad_sequence(aa_tensor, batch_first=True)
+        nn_train = pad_sequence(nn_tensor, batch_first=True)
+        pp_train = pad_sequence(pp_tensor, batch_first=True)
         aa_length = torch.ByteTensor(aa_length)
         nn_length = torch.ByteTensor(nn_length)
         pp_length = torch.ByteTensor(pp_length)
 
-        anchor = create_data_loader([aa_train, aa_length], len(aa))
-        positive = create_data_loader([pp_train, pp_length], len(pp))
-        negative = create_data_loader([nn_train, nn_length], len(nn))
+        # anchor = create_data_loader([aa_train, aa_length], len(aa))
+        # positive = create_data_loader([pp_train, pp_length], len(pp))
+        # negative = create_data_loader([nn_train, nn_length], len(nn))
+
+        anchor = [aa_train, aa_length]
+        positive = [pp_train, pp_length]
+        negative = [nn_train, nn_length]
 
         x, pos, neg = model(anchor, positive, negative)
 
         loss, pos_sim, neg_sim = self.triplet_distance(x, pos, neg)
 
-        return loss, pos_sim, neg_sim
+        return loss, pos_sim, neg_sim, len(triplets)

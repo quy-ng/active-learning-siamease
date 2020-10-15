@@ -1,7 +1,7 @@
 import torch
 from torch.optim import lr_scheduler
 import torch.optim as optim
-from tqdm import tqdm
+
 import sys
 
 # Set up the network and training parameters
@@ -31,13 +31,13 @@ train_dataset, raw_presentation = Inspectorio.load_data('~/Desktop/active_learni
 model_path = 'pretrain/trained_batch_model_v02.h5'
 model_save = 'pretrain/online_model.h5'
 
-model = biGru(embedding_net=CharacterEmbedding(embeddings_dim, default_vocab, max_length),
+model = biGru(embedding_net=CharacterEmbedding(embeddings_dim, vocab=default_vocab, max_length=max_length),
               n_classes=n_classes, hid_dim=hid_dim, layers=1)
 if cuda:
     model.cuda()
 loss_fn = OnlineTripletLoss(margin,
                             HardestNegativeTripletSelector(margin, cpu=True),
-                            TripletDistance(margin).to(device))
+                            TripletDistance(margin).to(device), max_length)
 lr = 1e-3
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 scheduler = lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
@@ -55,38 +55,45 @@ if __name__ == '__main__':
 
     want_stop = False
 
-    for epoch in tqdm(range(n_epochs), desc="Epoch", total=n_epochs):
+    for epoch in range(n_epochs):
         avg_loss = 0
         avg_pos_sim = 0
         avg_neg_sim = 0
         for batch, data in enumerate(train_dataset):
             df_idx = data[2].cpu().numpy()
             x = model(data)
-            loss = loss_fn(x, model, (df_idx, raw_presentation[df_idx]), default_vocab)
+            loss, pos_sim, neg_sim, n_triplets = loss_fn(x, model, (df_idx, raw_presentation[df_idx]), default_vocab)
             # Append to batch list
             avg_loss += float(loss)
+            avg_pos_sim += pos_sim.mean()
+            avg_neg_sim += neg_sim.mean()
             # Update weights
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        # Average loss and distance of all epochs
-        avg_loss /= len(train_dataset)
 
-        print("Do you want to add more input? \n")
-        while not valid_response:
-            prompt = '(y)es / (n)o'
-            valid_responses = {'y', 'n'}
+            avg_loss /= n_triplets
+            avg_pos_sim /= n_triplets
+            avg_neg_sim /= n_triplets
+            loss_list.append(avg_loss)
 
-            print(prompt, file=sys.stderr)
-            user_input = input()
-            if user_input in valid_responses:
-                valid_response = True
-        if user_input == 'y':
-            break
-        if user_input == 'n':
-            print('Stopping training', file=sys.stderr)
-            want_stop = True
-            break
+
+            print("Do you want to add more input? \n")
+            valid_response = False
+            while not valid_response:
+                prompt = '(y)es / (n)o'
+                valid_responses = {'y', 'n'}
+
+                print(prompt, file=sys.stderr)
+                user_input = input()
+                if user_input in valid_responses:
+                    valid_response = True
+            if user_input == 'y':
+                pass
+            if user_input == 'n':
+                print('Stopping training', file=sys.stderr)
+                want_stop = True
+                break
 
         if want_stop:
             loss_list.append(avg_loss)
@@ -101,7 +108,7 @@ if __name__ == '__main__':
             )
             torch.save(
                 {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
-                model_path,
+                model_save,
             )
-            print(f'Saved params! at {model_save}', file=sys.stderr)
+            print(f'\nSaved params! at {model_save}', file=sys.stderr)
             break
