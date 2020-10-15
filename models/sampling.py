@@ -150,13 +150,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
         self.margin = margin
         self.negative_selection_fn = negative_selection_fn
 
-    def get_triplets(self, data, model):
-        name_address = []
-        for i in range(len(data[0])):
-            name_address.append(data[0][i] + '; ' + data[1][i])
-        embeddings, perm_idx = model(name_address)
-        if self.cpu:
-            embeddings = embeddings.cpu()
+    def get_triplets(self, embeddings, model, raw_data):
 
         distance_matrix = pdist(embeddings)
         distance_matrix = distance_matrix.cpu()
@@ -171,7 +165,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
         for i in range(0, distance_matrix.shape[0]):
             copied_d = copy.copy(distance_matrix)
             sorted_val, sorted_in = copied_d[i].sort()
-            hypothesis_positives = sorted_in[1:4].tolist()
+            hypothesis_positives = sorted_in[1:3].tolist()
             hypothesis_negatives = []
 
             # find hypothesis triplet where dp - dn < margin
@@ -207,26 +201,26 @@ class FunctionNegativeTripletSelector(TripletSelector):
         for i in indices_new:
             anchor = candidates_index[i][0]
             test = candidates_index[i][1]
-            data_anchor = (data[0][anchor], data[1][anchor])
-            data_test = (data[0][test], data[1][test])
-            candidates.append((data_anchor, data_test))
+            data_anchor = (raw_data[1][anchor][0], raw_data[1][anchor][1])
+            data_test = (raw_data[1][test][0], raw_data[1][test][1])
+            candidates.append((data_anchor, data_test, anchor, test))
         candidates.reverse()
 
         candidates = list(set(candidates))
         triplets = console_label(candidates)
-        anchor = []
-        neg = []
-        pos = []
-        for i in triplets:
-            anchor.append(i[0][0] + '; ' + i[0][1])
-            pos.append(i[1][0] + '; ' + i[1][1])
-            neg.append(i[2][0] + '; ' + i[2][1])
-        anchor, _ = model(anchor)
-        pos, _ = model(pos)
-        neg, _ = model(neg)
-
-        triplets = [anchor, pos, neg]
-        triplets = np.array(triplets)
+        # anchor = []
+        # neg = []
+        # pos = []
+        # for i in triplets:
+        #     anchor.append(i[0][0] + '; ' + i[0][1])
+        #     pos.append(i[1][0] + '; ' + i[1][1])
+        #     neg.append(i[2][0] + '; ' + i[2][1])
+        # anchor, _ = model(anchor)
+        # pos, _ = model(pos)
+        # neg, _ = model(neg)
+        #
+        # triplets = [anchor, pos, neg]
+        # triplets = np.array(triplets)
 
         return triplets
 

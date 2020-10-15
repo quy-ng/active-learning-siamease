@@ -39,7 +39,7 @@ class biGru(torch.nn.Module):
         output = self.linear_final(output)
         return output
 
-    def forward(self, x1, x2, x3=None):
+    def forward(self, x1, x2=None, x3=None):
         """
         x1, x2, x3: List[Tensor], List[0] is data, List[1] data length
         """
@@ -55,6 +55,11 @@ class biGru(torch.nn.Module):
                 torch.sum(negatives, dim=1),
             )
             return anchors, positives, negatives
+        elif x2 is None and x3 is None:
+            # for active learning
+            x1 = self.forward_detail(x1)
+            x1 = torch.sum(x1, dim=1)
+            return x1
         else:
             # for test
             x1, x2 = self.forward_detail(x1), self.forward_detail(x2)

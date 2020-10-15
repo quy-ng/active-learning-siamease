@@ -137,7 +137,7 @@ def validate(model, X1, X2, device):
 batch_size = 5000
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 data_path = './data/dac/dedupe-project/test/GT_added.csv'
-model_path = 'pretrain/trained_batch_model_old_vocab.h5'
+model_path = 'pretrain/trained_batch_model_v02.h5'
 
 test_df = pd.read_csv(data_path, encoding="ISO-8859-1")
 test_df.fillna("", inplace=True)

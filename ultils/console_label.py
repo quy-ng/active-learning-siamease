@@ -20,11 +20,15 @@ def console_label(uncertain_pairs):
         n_match = len(match_list)
         n_distinct = len(distinct_list)
 
-        if random.random() > 0.85:
-            display_pair = (record_pair[0], (record_pair[0][0], augment_address(record_pair[0][1])))
-            uncertain_pairs.append((record_pair[0], record_pair[1]))
-        else:
-            display_pair = (record_pair[0], record_pair[1])
+        # if random.random() > 0.85:
+        #     display_pair = (record_pair[0], (record_pair[0][0], augment_address(record_pair[0][1])))
+        #     uncertain_pairs.append((record_pair[0], record_pair[1]))
+        # else:
+        #     display_pair = (record_pair[0], record_pair[1])
+        display_pair = (record_pair[0], record_pair[1])
+        display_index = (record_pair[2], record_pair[3])
+
+        print("\n", file=sys.stderr)
 
         line = "(A) %s\n(B) %s" % (display_pair[0], display_pair[1])
         print(line, file=sys.stderr)

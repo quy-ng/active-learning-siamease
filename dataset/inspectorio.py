@@ -1,7 +1,12 @@
 import re
+import torch
 import pandas as pd
+import numpy as np
+from tqdm import tqdm
 from sklearn.utils import shuffle
-from torch.utils.data import Dataset
+from torch.utils.data import TensorDataset, DataLoader
+from dataset.inspectorio_label import load_padded_data
+
 
 __all__ = ['Inspectorio']
 
@@ -24,64 +29,42 @@ def remove_alone_char(text):
 
 
 def process_helper(row):
-    result_address = row[1]
+    result_address = row
     result_address = result_address.lower()
     result_address = re.sub('null', ' ', result_address)
     result_address = re.sub(r'(0)\1{4}', ' ', result_address)  # remove zipcode 00000
     result_address = re.sub(r'(,)\1+', ', ', result_address)  # remove zipcode multiple `,`
     result_address = remove_alone_char(result_address)  # remove `-`, `.`, `,` if they stand alone
     result_address = re.sub(' +', ' ', result_address)
-    return row[0].lower(), result_address.strip()
+    return result_address.strip()
 
 
-class Inspectorio(Dataset):
+class Inspectorio:
+    @classmethod
+    def load_data(cls, data_path, batch_size, vocab):
+        df = pd.read_excel(data_path)
+        df['content'] = df.apply(lambda row: process_helper(row['address']), axis=1)
+        data, data_length = load_padded_data(df, vocab)
+        data = np.array(data)
+        origin_data = df[['name', 'address']].values
+        data_dict = {"data": [], "length": [], "raw": []}
 
-    def __init__(self, file_path, transform=None):
-        df = pd.read_excel(file_path)
-        if transform is not None:
-            augmented_df = transform(df)
-            data = augmented_df.apply(lambda row: process_helper(row), axis=1)
-        else:
-            data = df[['name', 'address']].apply(lambda row: process_helper(row), axis=1)
-        self.data = shuffle(data.values)
-        length_max = 0
-        for i in self.data:
-            _len = len(i[0]) + len(i[1]) + 2  # 2 for join name and address
-            if _len > length_max:
-                length_max = _len
-        self.length_max = length_max
+        for idx in tqdm(
+                range(0, len(data)),
+                desc="Load data"
+        ):
+            data_dict["data"].append(data[idx])
+            data_dict["length"].append(data_length[idx])
+            data_dict["raw"].append(idx)
 
-    def __len__(self):
-        return len(self.data)
+        array = np.array(data_dict["data"])
+        lengths = np.array(data_dict["length"])
+        raw_array = np.array(data_dict["raw"])
 
-    def __getitem__(self, index):
-        feed = self.data[index]
-        return feed
+        data = TensorDataset(
+            torch.from_numpy(array).type(torch.LongTensor),
+            torch.ByteTensor(lengths),
+            torch.from_numpy(raw_array)
+        )
+        return DataLoader(data, batch_size=batch_size), origin_data
 
-
-if __name__ == '__main__':
-    from dataset.augmentation import augment_dataframe
-
-    dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=augment_dataframe)
-    print(dataset[0:3])
-    print(dataset[2])
-
-    from torch.utils.data import DataLoader
-
-    dataloader = DataLoader(dataset, batch_size=10, shuffle=True, num_workers=2)
-    for batch_idx, batch in enumerate(dataloader):
-        print(batch_idx, batch)
-        break
-
-    print('#' * 10)
-    dataset = Inspectorio('~/Desktop/active_learning_data.xlsx', transform=None)
-    print(dataset[0:3])
-
-    print('#' * 10)
-    print(process_helper(('AL-KARAM TEXTILE MILLS (PVT) LIMITED - UNIT III', 'HT-11/1, LANDHI INDUSTRIAL AREA')))
-    print(process_helper(('L&T GROUP COMPANY LIMITED',
-                          '41/7 Tan Thoi Nhat 8 Street, Tan Thoi Nhat Ward,, District 12, Ho Chi Minh City, Vietnam, '
-                          'Ho Chi Minh, VN 70000')))
-
-    print(process_helper(("krishna beads industries llp", " - sector 63 no -")))
-    print(process_helper(("h. s. craft manufacturing cop.", " , no - rd")))
