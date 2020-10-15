@@ -23,11 +23,13 @@ batch_size = 13
 lr = 0.01
 early_stopping_steps = 5
 
-model_path = './model/trained_batch_model.h5'
+model_path = './pretrain/trained_batch_model.h5'
 
 anc_loader, pos_loader, neg_loader, max_length = InspectorioLabel.load_data(
         './data/dac/dedupe-project/new/new_generated_labeled_data.csv', batch_size, default_vocab
     )
+
+print(f'dataset max length is {max_length}')
 
 model = biGru(embedding_net=CharacterEmbedding(embeddings_dim, vocab=default_vocab, max_length=max_length),
               n_classes=n_classes, hid_dim=hid_dim, layers=1)

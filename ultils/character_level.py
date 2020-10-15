@@ -79,7 +79,7 @@ default_vocab = {
 
 def vectorize(seq, vocab):
     try:
-        vectorized_seq = [vocab.get(tok) for tok in seq]
+        vectorized_seq = [vocab.get(tok) for tok in seq if vocab.get(tok) is not None]
     except:
         print(seq)
     return vectorized_seq

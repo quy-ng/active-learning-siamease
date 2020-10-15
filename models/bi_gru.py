@@ -40,6 +40,9 @@ class biGru(torch.nn.Module):
         return output
 
     def forward(self, x1, x2, x3=None):
+        """
+        x1, x2, x3: List[Tensor], List[0] is data, List[1] data length
+        """
         if x3 is not None:
             anchors, positives, negatives = (
                 self.forward_detail(x1),
@@ -52,3 +55,8 @@ class biGru(torch.nn.Module):
                 torch.sum(negatives, dim=1),
             )
             return anchors, positives, negatives
+        else:
+            # for test
+            x1, x2 = self.forward_detail(x1), self.forward_detail(x2)
+            x1, x2 = torch.sum(x1, dim=1), torch.sum(x2, dim=1)
+            return x1, x2
