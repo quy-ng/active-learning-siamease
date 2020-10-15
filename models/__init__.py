@@ -1,3 +1,2 @@
-from .triplet_net import *
-from .triplet_distance import *
-from .embedding_net import *
+from .bi_gru import biGru
+from .embedding_net import CharacterEmbedding
