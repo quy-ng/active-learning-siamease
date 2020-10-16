@@ -6,10 +6,11 @@ import dataJson from './sample/data.json'
 function App() {
   const $ref = createRef<any>();
   const [data, setData] = useState<any[]>([]);
+  const [transactionId, setTransactionId] = useState<number>(-1);
 
   useEffect(() => {
     setData(dataJson.data);
-  }, [])
+  }, []);
 
   const onFileSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -21,11 +22,16 @@ function App() {
         'Content-Type': 'multipart/form-data'
       }
     }).then((response) => {
-      console.log('Upload successfully');
+      // Do something here, set transaction id
+      // setTransactionId()
       setData(response.data);
     }).catch(() => {
       console.log('Upload failed');
     })
+  }
+  const onDone = () => {
+    //DO SOMETHING HERE
+    console.log('Done');
   }
 
   return (
@@ -38,22 +44,26 @@ function App() {
       )}
       {data.length > 0 && (
         <>
-          {data?.map((entry, index) => (
+          {data?.map((entries, index) => (
             <div key={index}>
               <h3 style={{color: 'red'}}>{index}</h3>
               <table className="table">
                 <thead>
                   <tr>
                     <th></th>
-                    <th style={{width: '40%'}}>{entry?.a[0]}</th>
-                    <th style={{width: '55%'}}>{entry?.a[1]}</th>
+                    <th style={{width: '40%'}}>{entries?.a[0]}</th>
+                    <th style={{width: '55%'}}>{entries?.a[1]}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {entry?.b.map((subEntry: any[], subIndex: number) => (
+                  {entries?.b.map((subEntry: any[], subIndex: number) => (
                     <tr key={subIndex}>
                       <td>
-                        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike" />
+                        <input type="checkbox"
+                          onChange={event => {
+                            entries[3] = event.target.checked;
+                          }}
+                        />
                       </td>
                       <td>{subEntry[0]}</td>
                       <td>{subEntry[1]}</td>
@@ -64,7 +74,7 @@ function App() {
               <br/>
             </div>
           ))}
-          <button type={"button"}>Done</button>
+          <button type={"button"} onClick={onDone}>Done</button>
         </>
       )}
     </div>
