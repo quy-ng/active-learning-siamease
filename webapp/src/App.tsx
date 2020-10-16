@@ -10,20 +10,22 @@ function App() {
   const [transactionId, setTransactionId] = useState<string>('');
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [userInput, setUserInput] = useState<string>('n');
+  const [showUserInput, setShowUserInput] = useState<boolean>(false);
 
+  const fetchData = () => {
+    axios.post(`${API_ROOT}/status`, {
+      task_id: transactionId
+    }).then((response) => {
+      setData(response.data.data);
+      console.log('Get data successfully', response.data.data);
+      setLoadingData(false);
+    });
+  }
   useEffect(() => {
     if (transactionId) {
       setLoadingData(true);
       // get extracted entries after 10s
-      setTimeout(() => {
-        axios.post(`${API_ROOT}/status`, {
-          task_id: transactionId
-        }).then((response) => {
-          setData(response.data.data);
-          console.log('Get data successfully', response.data.data);
-          setLoadingData(false);
-        })
-      }, 10000)
+      setTimeout(fetchData, 10000)
     }
   }, [transactionId]);
 
@@ -44,7 +46,8 @@ function App() {
       console.log('Upload failed');
     })
   }
-  const onDone = () => {
+
+  const submitData = () => {
     axios.post(`${API_ROOT}/submit`, {
       task_id: transactionId,
       user_input: userInput, // should be changeable
@@ -52,7 +55,13 @@ function App() {
     }).then(() => {
       console.log('Final submission is successfully');
       // if user_input is 'n' clear all data and getting back to the first step
-      setData([]);
+      if (userInput === 'n') {
+        setData([]);
+        setTransactionId('');
+      } else {
+        setLoadingData(true);
+        fetchData();
+      }
     })
   }
 
@@ -102,7 +111,8 @@ function App() {
                 <br/>
               </div>
             ))}
-          <button type={"button"} onClick={onDone}>Done</button>
+          <input type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
+          <button type={"button"} onClick={submitData}>Done</button>
         </>
       )}
     </div>
