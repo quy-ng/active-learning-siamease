@@ -5,7 +5,6 @@ import dataJson from './sample/data.json'
 
 function App() {
   const $ref = createRef<any>();
-  console.log(dataJson);
   const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
