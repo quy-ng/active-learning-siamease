@@ -56,7 +56,9 @@ def submit():
         if os.path.isfile(task_submit):
             return "please retry"
         else:
-            json.dump(request.json, codecs.open(task_submit, 'w', 'UTF-8'))
+            # json.dump(request.json, codecs.open(task_submit, 'w', 'UTF-8'))
+            with open(task_submit, 'w') as outfile:
+                json.dump(request.json, outfile)
             return "ok"
 
 
