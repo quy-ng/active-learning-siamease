@@ -6,11 +6,15 @@ import uuid
 import shlex
 import subprocess
 
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/upload', methods=['POST'])
+@cross_origin()
 def upload_file():
     if request.method == 'POST':
         task_id = str(uuid.uuid4()).split('-')[-1]
@@ -23,6 +27,7 @@ def upload_file():
 
 
 @app.route('/status', methods=['POST'])
+@cross_origin()
 def status():
     if request.method == 'POST':
         task_id = request.json['task_id']
@@ -43,6 +48,7 @@ def status():
 
 
 @app.route('/submit', methods=['POST'])
+@cross_origin()
 def submit():
     if request.method == 'POST':
         task_id = request.json['task_id']
