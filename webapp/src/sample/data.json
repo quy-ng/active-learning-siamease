@@ -1,0 +1,19 @@
+{
+  "status": "1",
+  "data" : [
+    {
+      "a": ["Aalfs Mfg Mexico OMJC", "Blvd. Gzlez de la Vega 233, Parque Industrial Lagunero, Gomez Palacio, MX 35078"],
+      "b": [
+        ["AL-KARAM TEXTILE MILLS (PVT) LIMITED", "H.T.11/1, LANDHI INDUSTRIAL AREA"],
+        ["AL-KARAM TEXTILE MILLS (PVT) LIMITED - UNIT III", "HT-11/1, LANDHI INDUSTRIAL AREA"]
+      ]
+    },
+    {
+      "a": ["American Textile Company - Dallas", "3601 Pinnacle Point Drive, Dallas, TX, Dallas, US 75211"],
+      "b": [
+        ["American Textile Company - Salt Lake", "1781 South 4800 West, , Salt Lake City, US 84104"],
+        ["AL-KARAM TEXTILE MILLS (PVT) LIMITED - UNIT III", "HT-11/1, LANDHI INDUSTRIAL AREA"]
+      ]
+    }
+  ]
+}
