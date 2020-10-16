@@ -9,7 +9,7 @@ function App() {
   const [data, setData] = useState<any[]>([]);
   const [transactionId, setTransactionId] = useState<string>('');
   const [loadingData, setLoadingData] = useState<boolean>(false);
-  const [userInput, setUserInput] = useState<string>('n');
+  const [userInput, setUserInput] = useState<string>('');
 
   const fetchData = () => {
     if (!transactionId) {
@@ -111,7 +111,7 @@ function App() {
                 <br/>
               </div>
             ))}
-          <input type="text" placeholder="Do you want to load more? (y/N)" value="" onChange={(e) => setUserInput(e.target.value)}/>
+          <input type="text" placeholder="Do you want to load more? (y/N)" value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
           <button type={"button"} onClick={submitData}>Done</button>
         </>
       )}
