@@ -29,7 +29,8 @@ def web_label(uncertain_pairs, task_id):
             existing_submit = codecs.open(task_submit, 'r', 'UTF-8').read()
             is_submit_file_empty = len(existing_submit.strip()) == 0
             if is_submit_file_empty is not True:
-                data = json.loads(existing_submit)
+                with open(task_submit) as json_file:
+                    data = json.load(json_file)
                 for i in data['data']:
                     anchor = tuple(i['a'])
                     for j in i['b']:
