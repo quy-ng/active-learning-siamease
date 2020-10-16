@@ -4,19 +4,7 @@ import numpy as np
 import torch.nn.functional as F
 from ultils.character_level import vectorize
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import TensorDataset, DataLoader
 __all__ = ['OnlineTripletLoss', 'TripletDistance']
-
-
-def create_data_loader(X, batch_size):
-    X, X_lens = np.array(X[0]), np.array(X[1])
-
-    # Create data loader
-    data = TensorDataset(
-        torch.from_numpy(X).type(torch.LongTensor), torch.ByteTensor(X_lens)
-    )
-    loader = DataLoader(data, batch_size=batch_size, drop_last=False)
-    return loader
 
 
 class TripletDistance(nn.Module):
@@ -54,12 +42,6 @@ class TripletDistance(nn.Module):
 
 
 class OnlineTripletLoss(nn.Module):
-    """
-    Online Triplets loss
-    Takes a batch of embeddings and corresponding labels.
-    Triplets are generated using triplet_selector object that take embeddings and targets and return indices of
-    triplets
-    """
 
     def __init__(self, margin, triplet_selector, triplet_distance, max_length):
         super(OnlineTripletLoss, self).__init__()
@@ -125,10 +107,6 @@ class OnlineTripletLoss(nn.Module):
         aa_length = torch.ByteTensor(aa_length)
         nn_length = torch.ByteTensor(nn_length)
         pp_length = torch.ByteTensor(pp_length)
-
-        # anchor = create_data_loader([aa_train, aa_length], len(aa))
-        # positive = create_data_loader([pp_train, pp_length], len(pp))
-        # negative = create_data_loader([nn_train, nn_length], len(nn))
 
         anchor = [aa_train, aa_length]
         positive = [pp_train, pp_length]

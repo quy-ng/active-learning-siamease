@@ -1,5 +1,4 @@
 import sys
-import random
 import pandas as pd
 from dataset import augment_address
 
@@ -9,7 +8,6 @@ def console_label(uncertain_pairs):
 
     match_list = []
     distinct_list = []
-    uncertain_list = []
 
     while not finished:
         try:
@@ -20,13 +18,7 @@ def console_label(uncertain_pairs):
         n_match = len(match_list)
         n_distinct = len(distinct_list)
 
-        # if random.random() > 0.85:
-        #     display_pair = (record_pair[0], (record_pair[0][0], augment_address(record_pair[0][1])))
-        #     uncertain_pairs.append((record_pair[0], record_pair[1]))
-        # else:
-        #     display_pair = (record_pair[0], record_pair[1])
         display_pair = (record_pair[0], record_pair[1])
-        display_index = (record_pair[2], record_pair[3])
 
         print("\n", file=sys.stderr)
 
@@ -49,14 +41,9 @@ def console_label(uncertain_pairs):
                 valid_response = True
 
         if user_input == 'y':
-            # examples_buffer.insert(0, (record_pair, 'match'))
             match_list.append(display_pair)
         elif user_input == 'n':
-            # examples_buffer.insert(0, (record_pair, 'distinct'))
             distinct_list.append(display_pair)
-        # elif user_input == 'u':
-            # examples_buffer.insert(0, (record_pair, 'uncertain'))
-            # uncertain_list.append(display_pair)
         elif user_input == 'f':
             print('Finished labeling', file=sys.stderr)
             finished = True
@@ -87,5 +74,5 @@ if __name__ == '__main__':
          'song hong garment co., ltd, 10a1 tan long hamlet, thanh phu commune, ben luc district, nam dinh, vn ')
     ]
 
-    a, b, c = console_label(samples)
-    print(a, b, c)
+    a = console_label(samples)
+    print(a)

@@ -10,7 +10,7 @@ import pandas as pd
 from models import CharacterEmbedding, biGru
 from models.losses import TripletDistance
 from ultils.character_level import default_vocab
-from dataset.inspectorio_label import load_padded_data
+from dataset import load_padded_data
 from torch.utils.data import TensorDataset, DataLoader
 
 warnings.filterwarnings("ignore")
@@ -136,7 +136,7 @@ def validate(model, X1, X2, device):
 # ---- MAIN
 batch_size = 5000
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-data_path = './data/dac/dedupe-project/test/GT_added.csv'
+data_path = '~/Desktop/GT_added.csv'
 model_path = 'pretrain/online_model.h5'
 
 test_df = pd.read_csv(data_path, encoding="ISO-8859-1")
