@@ -111,7 +111,7 @@ function App() {
                 <br/>
               </div>
             ))}
-          <input type="text" placeholder="Do you want to load more? (y/N)" value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
+          <input type="text" placeholder="Do you want to load more? (y/N)" style={{width: 300}} value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
           <button type={"button"} onClick={submitData}>Done</button>
         </>
       )}
