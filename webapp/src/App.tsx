@@ -60,6 +60,7 @@ function App() {
         setData([]);
         setTransactionId('');
       } else {
+        setData([]);
         fetchData();
       }
     })
