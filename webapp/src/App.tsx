@@ -1,4 +1,4 @@
-import React, {createRef, FormEvent, useState} from 'react';
+import React, {createRef, FormEvent, useEffect, useState} from 'react';
 import './App.css';
 import axios from 'axios';
 import dataJson from './sample/data.json'
@@ -6,8 +6,11 @@ import dataJson from './sample/data.json'
 function App() {
   const $ref = createRef<any>();
   console.log(dataJson);
-  const [data, setData] = useState<any[][] | null>([[1, 2, 3]]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    setData(dataJson.data);
+  }, [])
 
   const onFileSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -34,28 +37,32 @@ function App() {
           <button type="submit">Submit</button>
         </form>
       )}
-      {(data && data.length > 0) && (
-        <div>
-          <table style={{margin: "auto", marginBottom: 10}}>
-            <tr>
-              <th>Firstname</th>
-              <th>Lastname</th>
-              <th>Age</th>
-            </tr>
-            <tr>
-              <td>Jill</td>
-              <td>Smith</td>
-              <td>50</td>
-            </tr>
-            <tr>
-              <td>Eve</td>
-              <td>Jackson</td>
-              <td>94</td>
-            </tr>
+      {data?.map((entry, index) => (
+        <div key={index}>
+          <h3 style={{color: 'red'}}>{index}</h3>
+          <table style={{margin: "auto", marginBottom: 10, textAlign: 'left', width: 1000}}>
+            <thead>
+              <tr>
+                <th></th>
+                <th style={{width: '40%'}}>{entry?.a[0]}</th>
+                <th style={{width: '55%'}}>{entry?.a[1]}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entry?.b.map((subEntry: any[], subIndex: number) => (
+                <tr key={subIndex}>
+                  <td>
+                    <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike" />
+                  </td>
+                  <td>{subEntry[0]}</td>
+                  <td>{subEntry[1]}</td>
+                </tr>
+              ))}
+            </tbody>
           </table>
-          <button type={"button"}>Next</button>
+          <br/>
         </div>
-      )}
+      ))}
     </div>
   );
 }
