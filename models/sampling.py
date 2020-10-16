@@ -6,6 +6,7 @@ import copy
 import random
 from operator import itemgetter
 from ultils.console_label import console_label
+from ultils.web_label import web_label
 
 
 def pdist(vectors):
@@ -38,11 +39,13 @@ class FunctionNegativeTripletSelector:
     and return a negative index for that pair
     """
 
-    def __init__(self, margin, negative_selection_fn, cpu=True):
+    def __init__(self, margin, negative_selection_fn, cpu=True, is_web=False, task_id=None):
         super(FunctionNegativeTripletSelector, self).__init__()
         self.cpu = cpu
         self.margin = margin
         self.negative_selection_fn = negative_selection_fn
+        self.is_web = is_web
+        self.task_id = task_id
 
     def get_triplets(self, embeddings, model, raw_data):
 
@@ -72,21 +75,22 @@ class FunctionNegativeTripletSelector:
                 hard_negative = np.argmin(_loss)
                 hypothesis_triplets.append((i, j, hypothesis_negatives[hard_negative]))
 
-            # mix hypothesis_triplets
-            for l in hypothesis_triplets:
-                candidates_index.append((l[0], l[1]))
-                candidates_index.append((l[0], l[2]))
-                candidates_index.append((l[1], l[2]))
+
             # mix hypothesis_positives
             candidates_index.append(tuple(random.sample(hypothesis_positives, 2)))
 
             # random
-            random_selected = random.choices([i for i in range(distance_matrix.shape[0])], k=2)
+            random_selected = random.choices([l for l in range(distance_matrix.shape[0])], k=2)
             for h in random_selected:
                 if i != h and (i, h) not in candidates_index:
                     candidates_index.append((i, h))
+        # mix hypothesis_triplets
+        for l in hypothesis_triplets:
+            candidates_index.append((l[0], l[1]))
+            candidates_index.append((l[0], l[2]))
+            candidates_index.append((l[1], l[2]))
+        candidates_index = list(set(candidates_index))
 
-            candidates_index = list(set(candidates_index))
         for i in candidates_index:
             candidates_distance.append(distance_matrix[i[0], i[1]])
 
@@ -101,26 +105,26 @@ class FunctionNegativeTripletSelector:
         candidates.reverse()
 
         candidates = list(set(candidates))
-        triplets = console_label(candidates)
+
+        if self.is_web is False:
+            triplets = console_label(candidates)
+        else:
+            candidates_ = []
+            for i in hypothesis_triplets:
+                a_i = i[0]
+                p_i = i[1]
+                n_i = i[2]
+                a = (raw_data[1][a_i][0], raw_data[1][a_i][1])
+                p = (raw_data[1][p_i][0], raw_data[1][p_i][1])
+                n = (raw_data[1][n_i][0], raw_data[1][n_i][1])
+                candidates_.append((a,p,n))
+            triplets = web_label(candidates_, self.task_id)
 
         return triplets
 
 
-def HardestNegativeTripletSelector(margin, cpu=False):
+def HardestNegativeTripletSelector(margin, cpu=False, is_web=False, task_id=None):
     return FunctionNegativeTripletSelector(margin=margin,
                                            negative_selection_fn=hardest_negative,
-                                           cpu=cpu)
-
-
-def RandomNegativeTripletSelector(margin, cpu=False):
-    return FunctionNegativeTripletSelector(margin=margin,
-                                           negative_selection_fn=random_hard_negative,
-                                           cpu=cpu)
-
-
-def SemihardNegativeTripletSelector(margin, cpu=False):
-    return FunctionNegativeTripletSelector(margin=margin,
-                                           negative_selection_fn=lambda
-                                               x: semihard_negative(
-                                               x, margin),
-                                           cpu=cpu)
+                                           cpu=cpu,
+                                           is_web=is_web, task_id=task_id)

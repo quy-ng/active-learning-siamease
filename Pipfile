@@ -4,7 +4,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-skorch = "*"
 
 [packages]
 modal = "*"
@@ -18,6 +17,9 @@ nlpaug = "*"
 requests = "*"
 xlrd = "*"
 click = "*"
+flask = "*"
+redis = "*"
+werkzeug = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

@@ -43,12 +43,14 @@ class TripletDistance(nn.Module):
 
 class OnlineTripletLoss(nn.Module):
 
-    def __init__(self, margin, triplet_selector, triplet_distance, max_length):
+    def __init__(self, margin, triplet_selector, triplet_distance, max_length, is_web=False, task_id=None):
         super(OnlineTripletLoss, self).__init__()
         self.margin = margin
         self.triplet_selector = triplet_selector
         self.triplet_distance = triplet_distance
         self.max_length = max_length
+        self.is_web = is_web
+        self.task_id = task_id
 
     def forward(self, embedded_data, model, raw_data, vocab):
 
