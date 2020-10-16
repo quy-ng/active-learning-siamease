@@ -35,6 +35,10 @@
   border: 1px solid #c2c2c2;
 }
 
+.table thead tr {
+  background-color: bisque;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

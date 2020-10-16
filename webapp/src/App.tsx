@@ -77,10 +77,12 @@ function App() {
 
   return (
     <div style={{textAlign: "center", padding: 50}}>
+      <b> Welcome to Active Learning Framework for Duplicate Detection in SaaS Platform!</b>
+      <hr style={{marginBottom: 50}}></hr>
       {(data && data.length === 0 && !loadingData) && (
         <form onSubmit={onFileSubmit}>
           <input type="file" name="file" ref={$ref}/>
-          <button type="submit">Submit</button>
+          <button type="submit">Upload your training file (Excel)</button>
         </form>
       )}
       {loadingData && (
@@ -90,7 +92,7 @@ function App() {
         <>
           {data?.map((entries, index) => (
               <div key={index}>
-                <h3 style={{color: 'red'}}>{index}</h3>
+                <h3 style={{color: 'red'}}>{index}: Choose duplicate items if applicable.</h3>
                 <table className="table">
                   <thead>
                   <tr>
