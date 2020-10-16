@@ -8,10 +8,12 @@ function App() {
   const $ref = createRef<any>();
   const [data, setData] = useState<any[]>([]);
   const [transactionId, setTransactionId] = useState<string>('');
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [userInput, setUserInput] = useState<string>('n');
 
   useEffect(() => {
     if (transactionId) {
+      setLoadingData(true);
       // get extracted entries after 10s
       setTimeout(() => {
         axios.post(`${API_ROOT}/status`, {
@@ -19,6 +21,7 @@ function App() {
         }).then((response) => {
           setData(response.data.data);
           console.log('Get data successfully', response.data.data);
+          setLoadingData(false);
         })
       }, 10000)
     }
@@ -55,13 +58,16 @@ function App() {
 
   return (
     <div style={{textAlign: "center", padding: 50}}>
-      {data.length === 0 && (
+      {(data.length === 0 && !loadingData) && (
         <form onSubmit={onFileSubmit}>
           <input type="file" name="file" ref={$ref}/>
           <button type="submit">Submit</button>
         </form>
       )}
-      {data.length > 0 && (
+      {loadingData && (
+        <span>Loading data...</span>
+      )}
+      {(data.length > 0) && (
         <>
           {data?.map((entries, index) => (
               <div key={index}>
