@@ -61,7 +61,16 @@ function App() {
         setTransactionId('');
       } else {
         setData([]);
-        fetchData();
+        setLoadingData(true);
+        setTimeout(() => {
+          axios.post(`${API_ROOT}/status`, {
+            task_id: transactionId
+          }).then((response) => {
+            setData(response.data.data);
+            console.log('Get data successfully', response.data.data);
+            setLoadingData(false);
+          });
+        }, 10000);
       }
     })
   }
