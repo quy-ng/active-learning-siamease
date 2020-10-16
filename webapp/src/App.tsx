@@ -10,23 +10,24 @@ function App() {
   const [transactionId, setTransactionId] = useState<string>('');
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [userInput, setUserInput] = useState<string>('n');
-  const [showUserInput, setShowUserInput] = useState<boolean>(false);
 
   const fetchData = () => {
-    axios.post(`${API_ROOT}/status`, {
-      task_id: transactionId
-    }).then((response) => {
-      setData(response.data.data);
-      console.log('Get data successfully', response.data.data);
-      setLoadingData(false);
-    });
+    if (!transactionId) {
+      return;
+    }
+    setLoadingData(true);
+    setTimeout(() => {
+      axios.post(`${API_ROOT}/status`, {
+        task_id: transactionId
+      }).then((response) => {
+        setData(response.data.data);
+        console.log('Get data successfully', response.data.data);
+        setLoadingData(false);
+      });
+    }, 10000);
   }
   useEffect(() => {
-    if (transactionId) {
-      setLoadingData(true);
-      // get extracted entries after 10s
-      setTimeout(fetchData, 10000)
-    }
+    fetchData();
   }, [transactionId]);
 
   const onFileSubmit = (e: FormEvent) => {
@@ -59,7 +60,6 @@ function App() {
         setData([]);
         setTransactionId('');
       } else {
-        setLoadingData(true);
         fetchData();
       }
     })
@@ -67,7 +67,7 @@ function App() {
 
   return (
     <div style={{textAlign: "center", padding: 50}}>
-      {(data.length === 0 && !loadingData) && (
+      {(data && data.length === 0 && !loadingData) && (
         <form onSubmit={onFileSubmit}>
           <input type="file" name="file" ref={$ref}/>
           <button type="submit">Submit</button>
@@ -76,7 +76,7 @@ function App() {
       {loadingData && (
         <span>Loading data...</span>
       )}
-      {(data.length > 0) && (
+      {(data && data.length > 0) && (
         <>
           {data?.map((entries, index) => (
               <div key={index}>
@@ -111,7 +111,7 @@ function App() {
                 <br/>
               </div>
             ))}
-          <input type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
+          <input type="text" placeholder="Do you want to load more? (y/N)" value="" onChange={(e) => setUserInput(e.target.value)}/>
           <button type={"button"} onClick={submitData}>Done</button>
         </>
       )}
